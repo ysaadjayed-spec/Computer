@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مسابقة أجهزة الحاسب والتكنولوجيا التفاعلية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            purple: '#6d28d9',
+                            darkPurple: '#4c1d95',
+                            lightPurple: '#8b5cf6',
+                            blue: '#0284c7',
+                            gold: '#f59e0b',
+                            goldHover: '#d97706',
+                            softBg: '#f8fafc',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-short': 'bounce 0.8s ease-in-out 1',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #6d28d9 0%, #0284c7 100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px -5px rgba(109, 40, 217, 0.5);
+        }
+
+        .option-btn {
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            border-color: #8b5cf6;
+            background-color: #f3e8ff;
+        }
+
+        .option-btn.correct {
+            background-color: #dcfce7 !important;
+            border-color: #22c55e !important;
+            color: #15803d !important;
+        }
+
+        .option-btn.wrong {
+            background-color: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            color: #b91c1c !important;
+        }
+
+        /* Responsive Canvas for effects */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8">
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Main Container -->
+    <div class="w-full max-w-3xl">
+
+        <!-- START SCREEN -->
+        <div id="start-screen" class="glass-card rounded-3xl p-6 sm:p-10 text-center text-slate-800 transition-all duration-500 animate-float">
+            <div class="inline-flex items-center justify-center w-24 h-24 bg-brand-purple/10 rounded-full mb-6 text-brand-purple border-2 border-brand-lightPurple/30">
+                <i class="fa-solid fa-laptop-code text-5xl"></i>
+            </div>
+
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-brand-darkPurple mb-3 leading-tight">
+                مسابقة أجهزة الحاسب والتكنولوجيا التفاعلية 💻✨
+            </h1>
+
+            <p class="text-slate-600 text-base sm:text-lg mb-8 font-semibold">
+                مرحباً بكم في مسابقة المهارات الرقمية الشيقة! اختبر معلوماتك وانتقل بين الأسئلة لتحقق أعلى النقاط.
+            </p>
+
+            <div class="bg-gradient-to-r from-amber-500/10 via-amber-500/20 to-amber-500/10 border border-amber-300/50 rounded-2xl p-4 mb-8 inline-block w-full max-w-md">
+                <div class="flex items-center justify-center gap-3 text-amber-900 font-bold text-lg sm:text-xl">
+                    <i class="fa-solid fa-award text-amber-500 text-2xl"></i>
+                    <span>إعداد المعلمة: حنين المطيري</span>
+                </div>
+            </div>
+
+            <div>
+                <button onclick="startGame()" class="btn-gradient text-white font-extrabold text-xl py-4 px-10 rounded-2xl shadow-lg flex items-center justify-center gap-3 mx-auto w-full sm:w-auto">
+                    <span>ابدأ اللعبة الآن</span>
+                    <i class="fa-solid fa-play text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- QUIZ SCREEN -->
+        <div id="quiz-screen" class="glass-card rounded-3xl p-6 sm:p-8 text-slate-800 hidden relative">
+            
+            <!-- Top Header (Teacher Name & Score) -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6 border-b border-slate-200 pb-4">
+                <div class="flex items-center gap-2 text-brand-purple font-bold text-sm sm:text-base">
+                    <i class="fa-solid fa-chalkboard-user text-xl"></i>
+                    <span>إعداد المعلمة: حنين المطيري</span>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="bg-amber-100 text-amber-800 px-4 py-1.5 rounded-full font-extrabold text-sm sm:text-base flex items-center gap-2 border border-amber-300">
+                        <i class="fa-solid fa-star text-amber-500"></i>
+                        <span>النقاط: <span id="score-text">0</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2 font-bold text-slate-600 text-sm">
+                    <span id="question-number-label">السؤال 1 من 4</span>
+                    <span id="progress-percent">25%</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-3.5 overflow-hidden p-0.5">
+                    <div id="progress-bar" class="bg-gradient-to-r from-brand-purple to-brand-blue h-full rounded-full transition-all duration-500" style="width: 25%;"></div>
+                </div>
+            </div>
+
+            <!-- Question Box -->
+            <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-5 sm:p-7 mb-6">
+                <div class="flex items-start gap-4">
+                    <span class="bg-brand-purple text-white text-xl font-bold w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-md" id="q-index-badge">
+                        1
+                    </span>
+                    <h2 id="question-text" class="text-lg sm:text-2xl font-bold text-slate-900 leading-snug">
+                        جارٍ تحميل السؤال...
+                    </h2>
+                </div>
+            </div>
+
+            <!-- Options Grid -->
+            <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <!-- Dynamically filled options -->
+            </div>
+
+            <!-- Feedback Message Bar -->
+            <div id="feedback-box" class="hidden rounded-2xl p-4 text-center font-bold text-lg mb-6 transition-all duration-300">
+                <span id="feedback-text"></span>
+            </div>
+
+            <!-- Bottom Navigation Button -->
+            <div class="flex justify-end border-t border-slate-200 pt-4">
+                <button id="next-btn" onclick="nextQuestion()" disabled class="bg-slate-300 text-slate-500 font-bold text-lg py-3 px-8 rounded-xl flex items-center gap-2 transition-all cursor-not-allowed">
+                    <span>السؤال التالي</span>
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- RESULT SCREEN -->
+        <div id="result-screen" class="glass-card rounded-3xl p-6 sm:p-10 text-center text-slate-800 hidden animate-float">
+            <div id="result-icon-container" class="inline-flex items-center justify-center w-28 h-28 rounded-full mb-6 border-4">
+                <!-- Icon inserted via JS -->
+            </div>
+
+            <h2 id="result-title" class="text-3xl sm:text-4xl font-black mb-3">
+                نتيجة ممتازة! 🎉
+            </h2>
+
+            <p id="result-subtitle" class="text-slate-600 text-lg mb-6">
+                لقد أكملت جميع الأسئلة بنجاح.
+            </p>
+
+            <!-- Score Summary Card -->
+            <div class="bg-slate-100 border-2 border-slate-200 rounded-2xl p-6 mb-8 max-w-md mx-auto">
+                <div class="text-slate-500 font-bold text-base mb-1">النتيجة النهائية</div>
+                <div class="text-4xl sm:text-5xl font-black text-brand-purple mb-2">
+                    <span id="final-score">0</span> / <span id="max-score">40</span>
+                </div>
+                <div id="performance-tag" class="inline-block bg-emerald-100 text-emerald-800 font-bold text-sm px-4 py-1.5 rounded-full border border-emerald-300">
+                    أداء رائع جداً!
+                </div>
+            </div>
+
+            <!-- Teacher Branding -->
+            <div class="text-slate-600 font-bold mb-8 flex items-center justify-center gap-2 text-lg">
+                <i class="fa-solid fa-heart text-red-500"></i>
+                <span>شُكراً لمشاركتكِ المتميزة — إعداد المعلمة: حنين المطيري</span>
+            </div>
+
+            <div>
+                <button onclick="restartGame()" class="btn-gradient text-white font-extrabold text-xl py-4 px-10 rounded-2xl shadow-lg flex items-center justify-center gap-3 mx-auto w-full sm:w-auto">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span>إعادة اللعب</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Web Audio API Sound Generator (No external MP3 files needed)
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+        }
+
+        // Play Correct Answer Sound
+        function playCorrectSound() {
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
+                osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.35); // C6
+
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.5);
+            } catch (e) { console.log(e); }
+        }
+
+        // Play Wrong Answer Sound
+        function playWrongSound() {
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now); // A3
+                osc.frequency.setValueAtTime(174.61, now + 0.15); // F3
+
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } catch (e) { console.log(e); }
+        }
+
+        // Questions Array (4 Questions based on Computer Science Curriculum)
+        const questions = [
+            {
+                question: "أي من الأجهزة التالية يمكن حمله في أي مكان تقريباً وترواح مدة عمل بطاريته بين 2 إلى 8 ساعات؟",
+                options: [
+                    "الحاسب المحمول Laptop",
+                    "الحاسب المكتبي Desktop",
+                    "خادم البيانات Server",
+                    "شاشة العرض"
+                ],
+                correct: 0,
+                type: "mcq"
+            },
+            {
+                question: "ضع علامة صح أو خطأ: قفازات الواقع الافتراضي تُستخدم للتحكم في الألعاب وتسهل التحكم في الحركة الدقيقة.",
+                options: [
+                    "صحيح ✔️",
+                    "خاطئ ❌"
+                ],
+                correct: 0,
+                type: "tf"
+            },
+            {
+                question: "أي من أدوات الحاسب التفاعلية يتكون من سطح حساس يتيح لك الرسم والتصميم باستخدام قلم خاص؟",
+                options: [
+                    "لوح الرسم الرقمي Graphic Tablet",
+                    "لوحة اللمس Touchpad",
+                    "عصا التحكم Joystick",
+                    "نظارة الواقع الافتراضي VR"
+                ],
+                correct: 0,
+                type: "mcq"
+            },
+            {
+                question: "جهاز ألعاب فيديو محمول مثل (Nintendo Switch / Wii) يُستخدم للتحكم في الألعاب عن بُعد ومحاكاة الحركة.",
+                options: [
+                    "أجهزة ألعاب الفيديو التفاعلية",
+                    "الحاسب المكتبي",
+                    "شاشة التلفاز التقليدية",
+                    "المطبعة الرقمية"
+                ],
+                correct: 0,
+                type: "mcq"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answered = false;
+
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const qIndexBadge = document.getElementById('q-index-badge');
+        const questionNumberLabel = document.getElementById('question-number-label');
+        const progressPercent = document.getElementById('progress-percent');
+        const progressBar = document.getElementById('progress-bar');
+        const scoreText = document.getElementById('score-text');
+        const nextBtn = document.getElementById('next-btn');
+        const feedbackBox = document.getElementById('feedback-box');
+        const feedbackText = document.getElementById('feedback-text');
+
+        function startGame() {
+            initAudio();
+            currentQuestionIndex = 0;
+            score = 0;
+            scoreText.innerText = score;
+            startScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            answered = false;
+            const q = questions[currentQuestionIndex];
+
+            // Update Header Info
+            qIndexBadge.innerText = currentQuestionIndex + 1;
+            questionNumberLabel.innerText = `السؤال ${currentQuestionIndex + 1} من ${questions.length}`;
+            const progressVal = Math.round(((currentQuestionIndex + 1) / questions.length) * 100);
+            progressPercent.innerText = `${progressVal}%`;
+            progressBar.style.width = `${progressVal}%`;
+
+            // Reset Next Button & Feedback
+            nextBtn.disabled = true;
+            nextBtn.className = "bg-slate-300 text-slate-500 font-bold text-lg py-3 px-8 rounded-xl flex items-center gap-2 transition-all cursor-not-allowed";
+            feedbackBox.classList.add('hidden');
+
+            // Render Question Text
+            questionText.innerText = q.question;
+
+            // Render Options
+            optionsContainer.innerHTML = '';
+            
+            // Layout styling for True/False vs MCQ
+            if (q.type === 'tf') {
+                optionsContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 max-w-xl mx-auto w-full";
+            } else {
+                optionsContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6";
+            }
+
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = `option-btn w-full bg-white border-2 border-slate-200 text-slate-800 font-bold text-base sm:text-lg p-4 rounded-2xl text-right flex items-center justify-between shadow-sm`;
+                btn.onclick = () => selectAnswer(index);
+
+                btn.innerHTML = `
+                    <span class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-sm font-extrabold border border-slate-200">${index + 1}</span>
+                        <span>${opt}</span>
+                    </span>
+                    <i class="fa-regular fa-circle text-slate-300 text-xl icon-indicator"></i>
+                `;
+
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(selectedIndex) {
+            if (answered) return;
+            answered = true;
+
+            const q = questions[currentQuestionIndex];
+            const buttons = optionsContainer.children;
+
+            if (selectedIndex === q.correct) {
+                // Correct Answer
+                score += 10;
+                scoreText.innerText = score;
+                buttons[selectedIndex].classList.add('correct');
+                buttons[selectedIndex].querySelector('.icon-indicator').className = "fa-solid fa-circle-check text-emerald-600 text-2xl";
+                
+                showFeedback(true, "إجابة صحيحة! أحسنتِ 👏✨");
+                playCorrectSound();
+                triggerSmallConfetti();
+            } else {
+                // Wrong Answer
+                buttons[selectedIndex].classList.add('wrong');
+                buttons[selectedIndex].querySelector('.icon-indicator').className = "fa-solid fa-circle-xmark text-rose-600 text-2xl";
+
+                // Highlight Correct Option
+                buttons[q.correct].classList.add('correct');
+                buttons[q.correct].querySelector('.icon-indicator').className = "fa-solid fa-circle-check text-emerald-600 text-2xl";
+
+                showFeedback(false, "إجابة خاطئة! حاول في المرة القادمة 👍");
+                playWrongSound();
+            }
+
+            // Disable all buttons
+            Array.from(buttons).forEach(btn => btn.disabled = true);
+
+            // Enable Next Button
+            nextBtn.disabled = false;
+            nextBtn.className = "btn-gradient text-white font-extrabold text-lg py-3 px-8 rounded-xl flex items-center gap-2 transition-all cursor-pointer shadow-md";
+        }
+
+        function showFeedback(isCorrect, message) {
+            feedbackBox.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-800', 'bg-rose-100', 'text-rose-800', 'border-emerald-300', 'border-rose-300');
+            if (isCorrect) {
+                feedbackBox.classList.add('bg-emerald-100', 'text-emerald-800', 'border', 'border-emerald-300');
+            } else {
+                feedbackBox.classList.add('bg-rose-100', 'text-rose-800', 'border', 'border-rose-300');
+            }
+            feedbackText.innerText = message;
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            const maxScore = questions.length * 10;
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('max-score').innerText = maxScore;
+
+            const iconContainer = document.getElementById('result-icon-container');
+            const resultTitle = document.getElementById('result-title');
+            const resultSubtitle = document.getElementById('result-subtitle');
+            const performanceTag = document.getElementById('performance-tag');
+
+            if (score === maxScore) {
+                iconContainer.className = "inline-flex items-center justify-center w-28 h-28 rounded-full mb-6 border-4 bg-emerald-100 border-emerald-400 text-emerald-600";
+                iconContainer.innerHTML = `<i class="fa-solid fa-trophy text-5xl"></i>`;
+                resultTitle.innerText = "ممتاز! أداء استثنائي 🎉";
+                resultSubtitle.innerText = "أبدعتِ في الإجابة على جميع الأسئلة بشكل صحيح!";
+                performanceTag.className = "inline-block bg-emerald-100 text-emerald-800 font-bold text-base px-6 py-2 rounded-full border border-emerald-300";
+                performanceTag.innerText = "الدرجة الكاملة! ⭐️⭐️⭐️⭐️⭐️";
+                
+                triggerGrandConfetti();
+            } else if (score >= maxScore / 2) {
+                iconContainer.className = "inline-flex items-center justify-center w-28 h-28 rounded-full mb-6 border-4 bg-amber-100 border-amber-400 text-amber-600";
+                iconContainer.innerHTML = `<i class="fa-solid fa-star text-5xl"></i>`;
+                resultTitle.innerText = "أحسنتِ! عمل رائع 👍";
+                resultSubtitle.innerText = "إجاباتك جيدة جداً، استمري في التميز!";
+                performanceTag.className = "inline-block bg-amber-100 text-amber-800 font-bold text-base px-6 py-2 rounded-full border border-amber-300";
+                performanceTag.innerText = "أداء رائع!";
+            } else {
+                iconContainer.className = "inline-flex items-center justify-center w-28 h-28 rounded-full mb-6 border-4 bg-purple-100 border-purple-400 text-purple-600";
+                iconContainer.innerHTML = `<i class="fa-solid fa-lightbulb text-5xl"></i>`;
+                resultTitle.innerText = "محاولة جيدة! 💪";
+                resultSubtitle.innerText = "يمكنك مراجعة الدرس وإعادة اللعبة لتحقيق نتيجة أفضل.";
+                performanceTag.className = "inline-block bg-purple-100 text-purple-800 font-bold text-base px-6 py-2 rounded-full border border-purple-300";
+                performanceTag.innerText = "حاولي مرة أخرى";
+            }
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        // Confetti Fireworks Effects
+        function triggerSmallConfetti() {
+            confetti({
+                particleCount: 40,
+                spread: 60,
+                origin: { y: 0.7 }
+            });
+        }
+
+        function triggerGrandConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 999 };
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+
+        function randomInRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+    </script>
+</body>
+</html>
